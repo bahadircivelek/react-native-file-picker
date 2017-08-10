@@ -15,6 +15,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -131,7 +132,19 @@ public class FilePickerModule extends ReactContextBaseJavaModule implements Acti
       String path = null;
       path = getPath(currentActivity, uri);
       if (path != null) {
-          response.putString("path", path);
+        try {
+            File f = new File(path);
+            response.putDouble("fileSize", f.length());
+            response.putString("fileName", f.getName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String extension = MimeTypeMap.getFileExtensionFromUrl(path);
+        if (extension != null) {
+            response.putString("type", MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension));
+        }
+        response.putString("path", path);
       }else{
           path = getFileFromUri(currentActivity, uri);
           if(!path.equals("error")){
