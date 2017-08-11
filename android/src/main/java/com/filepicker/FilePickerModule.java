@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ContentUris;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -132,19 +133,19 @@ public class FilePickerModule extends ReactContextBaseJavaModule implements Acti
       String path = null;
       path = getPath(currentActivity, uri);
       if (path != null) {
-        try {
-            File f = new File(path);
-            response.putDouble("fileSize", f.length());
-            response.putString("fileName", f.getName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+          try {
+              File f = new File(path);
+              response.putDouble("fileSize", f.length());
+              response.putString("fileName", f.getName());
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
 
-        String extension = MimeTypeMap.getFileExtensionFromUrl(path);
-        if (extension != null) {
-            response.putString("type", MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension));
-        }
-        response.putString("path", path);
+          String extension = MimeTypeMap.getFileExtensionFromUrl(path);
+          if (extension != null) {
+              response.putString("type", MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension));
+          }
+          response.putString("path", path);
       }else{
           path = getFileFromUri(currentActivity, uri);
           if(!path.equals("error")){
@@ -284,10 +285,23 @@ public class FilePickerModule extends ReactContextBaseJavaModule implements Acti
     private String getFileFromUri(Activity activity, Uri uri){
       //If it can't get path of file, file is saved in cache, and obtain path from there
       try {
+        ContentResolver cR = activity.getContentResolver();
         String filePath = activity.getCacheDir().toString();
         String fileName = getFileNameFromUri(activity, uri);
         String path = filePath + "/" + fileName;
+
         if(!fileName.equals("error") && saveFileOnCache(path, activity, uri)){
+            try {
+                File f = new File(path);
+                response.putDouble("fileSize", f.length());
+                response.putString("fileName", f.getName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String extension = cR.getType(uri);
+            if (extension != null) {
+                response.putString("type", extension);
+            }
           return path;
         }else{
           return "error";
